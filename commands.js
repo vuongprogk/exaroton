@@ -14,6 +14,30 @@ const commands = [
     name: "stopserver",
     description: "Stopping the server",
   },
+  {
+    name: "executecmd",
+    description: "Execute command in minecraft server",
+    options: [
+      {
+        name: "command",
+        type: 3,
+        description: "Enter command that will be executed",
+        required: true,
+      },
+    ],
+  },
+  {
+    name: "serverstatus",
+    description: "Get server status",
+  },
+  {
+    name: "getserveraddr",
+    description: "Get server address",
+  },
+  {
+    name: "getcredits",
+    description: "Get account credits",
+  },
 ];
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);

@@ -1,7 +1,7 @@
 import { Client } from "exaroton";
 import "dotenv/config";
 const client = new Client(process.env.EXAROTON_KEY);
-function handleStatus(status) {
+export function handleStatus(status) {
   switch (status) {
     case 0:
       return "Server is offline";
@@ -44,10 +44,21 @@ export async function stopServer() {
   }
 }
 export async function execCommand(cmd) {
-  await server.execCommand(cmd);
+  let server = client.server(process.env.SERVER);
+  await server.executeCommand(cmd);
 }
 export async function getStatus() {
   let server = client.server(process.env.SERVER);
   await server.get();
   return server.status;
+}
+
+export async function getAddress() {
+  let server = client.server(process.env.SERVER);
+  await server.get();
+  return server.address;
+}
+export async function getCredits() {
+  let account = await client.getAccount();
+  return account.credits.toString();
 }
