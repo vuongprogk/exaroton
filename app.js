@@ -4,10 +4,10 @@ import * as discord from "./utils.js";
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 let status = await discord.getStatus();
+let address = await discord.getAddress();
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
-let address = await discord.getAddress();
 // Custom command
 async function start(interaction) {
   await discord.startServer();
