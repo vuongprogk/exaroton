@@ -1,6 +1,9 @@
 import { Client } from "exaroton";
 import "dotenv/config";
+
 const client = new Client(process.env.EXAROTON_KEY);
+const server = client.server(process.env.SERVER);
+
 export function handleStatus(status) {
   switch (status) {
     case 0:
@@ -28,37 +31,57 @@ export function handleStatus(status) {
   }
 }
 export async function startServer() {
-  let server = client.server(process.env.SERVER);
   try {
     await server.start();
-  } catch (err) {
-    console.log(err);
+  } catch (error) {
+    throw error.response.body.error;
   }
 }
 export async function stopServer() {
-  let server = client.server(process.env.SERVER);
   try {
     await server.stop();
-  } catch (err) {
-    console.log(err);
+  } catch (error) {
+    throw error.response.body.error;
   }
 }
 export async function execCommand(cmd) {
-  let server = client.server(process.env.SERVER);
-  await server.executeCommand(cmd);
+  // send command directly to Websocket
+  try {
+    await server.executeCommand(cmd);
+  } catch (error) {
+    throw error.response.body.error;
+  }
 }
 export async function getStatus() {
-  let server = client.server(process.env.SERVER);
-  await server.get();
-  return server.status;
+  try {
+    await server.get();
+    return server.status;
+  } catch (error) {
+    throw error.response.body.error;
+  }
 }
 
 export async function getAddress() {
-  let server = client.server(process.env.SERVER);
-  await server.get();
-  return server.address;
+  try {
+    await server.get();
+    return server.address;
+  } catch (error) {
+    if (error.response) throw error.response.body.error;
+    else throw error;
+  }
 }
 export async function getCredits() {
   let account = await client.getAccount();
-  return account.credits.toString();
+  try {
+    return account.credits.toString();
+  } catch (error) {
+    throw error.response.body.error;
+  }
+}
+export async function setRAM(amount) {
+  try {
+    await server.setRAM(amount);
+  } catch (e) {
+    throw e.response.body.error;
+  }
 }

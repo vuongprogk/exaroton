@@ -38,6 +38,18 @@ const commands = [
     name: "getcredits",
     description: "Get account credits",
   },
+  {
+    name: "setram",
+    description: "Set amount of ram on server",
+    options: [
+      {
+        name: "amount",
+        description: "Amount of ram is set",
+        type: 10,
+        required: true,
+      },
+    ],
+  },
 ];
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
