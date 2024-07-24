@@ -3,6 +3,14 @@ import "dotenv/config";
 
 const client = new Client(process.env.EXAROTON_KEY);
 const server = client.server(process.env.SERVER);
+await server.get();
+let status = server.status;
+let address = server.address;
+server.subscribe();
+server.subscribe("console");
+server.on("status", function (server) {
+  status = server.status;
+});
 
 export function handleStatus(status) {
   switch (status) {
@@ -27,7 +35,7 @@ export function handleStatus(status) {
     case 10:
       return "Server is preparing";
     default:
-      console.log("Cannot detect status");
+      return "Cannot detect status";
   }
 }
 export async function startServer() {
@@ -52,23 +60,12 @@ export async function execCommand(cmd) {
     throw error.response.body.error;
   }
 }
-export async function getStatus() {
-  try {
-    await server.get();
-    return server.status;
-  } catch (error) {
-    throw error.response.body.error;
-  }
+export function getStatus() {
+  return status;
 }
 
-export async function getAddress() {
-  try {
-    await server.get();
-    return server.address;
-  } catch (error) {
-    if (error.response) throw error.response.body.error;
-    else throw error;
-  }
+export function getAddress() {
+  return address;
 }
 export async function getCredits() {
   let account = await client.getAccount();

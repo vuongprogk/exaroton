@@ -45,7 +45,7 @@ const commands = [
       {
         name: "amount",
         description: "Amount of ram is set",
-        type: 10,
+        type: 4,
         required: true,
       },
     ],
