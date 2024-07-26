@@ -1,0 +1,20 @@
+import { SlashCommandBuilder } from "discord.js";
+import { Exaroton } from "./exaroton-api/utils.js";
+import { start } from "./exaroton-api/custom-cmd.js";
+
+export const data = new SlashCommandBuilder()
+  .setName("startserver")
+  .setDescription("Starting the server");
+export async function execute(interaction) {
+  try {
+    const server = new Exaroton()
+    let status = await server.getStatus();
+    if (status === 0) {
+      await start(interaction);
+    } else if (status === 1)
+      await interaction.reply(`Server has already run at ${await server.getAddress()}`);
+    else await interaction.reply("Server in proccess, please wait.");
+  } catch (error) {
+    throw error;
+  }
+}

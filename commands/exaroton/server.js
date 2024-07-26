@@ -1,0 +1,20 @@
+import { start, stop } from "./exaroton-api/custom-cmd.js";
+import { SlashCommandBuilder } from "discord.js";
+import { Exaroton } from "./exaroton-api/utils.js";
+
+export const data = new SlashCommandBuilder()
+  .setName("server")
+  .setDescription("Toggle server on/off");
+export async function execute(interaction) {
+  try {
+    const server = new Exaroton()
+    let status = await server.getStatus()
+    if (status === 0) {
+      await start(interaction);
+    } else if (status === 1) {
+      await stop(interaction);
+    } else await interaction.reply("Server in proccess, please wait.");
+  } catch (error) {
+    throw error;
+  }
+}

@@ -1,127 +1,73 @@
 import "dotenv/config";
-import { Client, GatewayIntentBits } from "discord.js";
-import * as discord from "./utils.js";
+import { readdirSync } from "node:fs";
+import { join, dirname, relative } from "node:path";
+import { fileURLToPath } from "url"
+import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import proccess from "node:process";
+
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-let address = discord.getAddress();
+client.commands = new Collection();
 
-client.on("ready", () => {
+// TODO: get path
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const foldersPath = join(__dirname, "commands");
+
+// TODO: get command folders
+const commandFolders = readdirSync(foldersPath);
+
+for (const folder of commandFolders) {
+
+  const commandsPath = join(foldersPath, folder);
+  const commandFiles = readdirSync(commandsPath)
+    .filter((file) => file.endsWith(".js"));
+  for (const file of commandFiles) {
+    const filePath = join(commandsPath, file);
+    const rpath = relative(__dirname, filePath).replaceAll("\\", '/')
+    const command = await import(`./${rpath}`)
+    if ('data' in command && 'execute' in command) {
+      // Set a new item in the Collection with the key as the command name and the value as the exported module
+      client.commands.set(command.data.name, command);
+    } else {
+      console.log(
+        `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
+      );
+    }
+  }
+}
+proccess.on("uncaughtException", (reason, promise) => {
+  console.log(`Unhandled exception at: ${promise} \nreason: ${reason}`);
+});
+client.on("ready", async () => {
   console.log(`Bot ${client.user.displayName} is started!`);
 });
-// Custom command
-async function start(interaction) {
-  try {
-    await discord.startServer();
-    await interaction.reply(`Server is starting at ${address}`);
-  } catch (error) {
-    throw error;
-  }
-}
-async function stop(interaction) {
-  try {
-    await discord.stopServer();
-    await interaction.reply("Server is stopping");
-  } catch (error) {
-    throw error;
-  }
-}
 
-client.on("interactionCreate", async (interaction) => {
+client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  if (interaction.commandName === "server") {
-    try {
-      let status = discord.getStatus();
-      if (status === 0) {
-        await start(interaction);
-      } else if (status === 1) {
-        await stop(interaction);
-      } else await interaction.reply("Server in proccess, please wait.");
-    } catch (error) {
-      if (typeof error === "object") await interaction.reply(error.message);
-      else if (typeof error === "string") await interaction.reply(error);
-      else
-        await interaction.reply("Server catch unknown error, please try late.");
-    }
-  } else if (interaction.commandName === "startserver") {
-    try {
-      let status = discord.getStatus();
-      if (status === 0) {
-        await start(interaction);
-      } else if (status === 1)
-        await interaction.reply(`Server has already run at ${address}`);
-      else await interaction.reply("Server in proccess, please wait.");
-    } catch (error) {
-      if (typeof error === "object") await interaction.reply(error.message);
-      else if (typeof error === "string") await interaction.reply(error);
-      else
-        await interaction.reply("Server catch unknown error, please try late.");
-    }
-  } else if (interaction.commandName === "stopserver") {
-    try {
-      let status = discord.getStatus();
-      if (status === 1) {
-        await stop(interaction);
-      } else await interaction.reply("Server is not running");
-    } catch (error) {
-      if (typeof error === "object") await interaction.reply(error.message);
-      else if (typeof error === "string") await interaction.reply(error);
-      else
-        await interaction.reply("Server catch unknown error, please try late.");
-    }
-  } else if (interaction.commandName === "executecmd") {
-    try {
-      let status = discord.getStatus();
-      if (status === 1) {
-        let cmd = interaction.options.getString("command");
-        await discord.execCommand(cmd);
-        await interaction.reply("Command is executed");
-      } else await interaction.reply("Server is not running");
-    } catch (error) {
-      if (typeof error === "object") await interaction.reply(error.message);
-      else if (typeof error === "string") await interaction.reply(error);
-      else
-        await interaction.reply("Server catch unknown error, please try late.");
-    }
-  } else if (interaction.commandName === "serverstatus") {
-    try {
-      let status = discord.getStatus();
-      await interaction.reply(discord.handleStatus(status));
-    } catch (error) {
-      if (typeof error === "object") await interaction.reply(error.message);
-      else if (typeof error === "string") await interaction.reply(error);
-      else
-        await interaction.reply("Server catch unknown error, please try late.");
-    }
-  } else if (interaction.commandName === "getserveraddr") {
-    if (address) await interaction.reply(address);
-    else await interaction.reply("Server not found");
-  } else if (interaction.commandName === "getcredits") {
-    try {
-      await interaction.reply(await discord.getCredits());
-    } catch (error) {
-      if (typeof error === "object") await interaction.reply(error.message);
-      else if (typeof error === "string") await interaction.reply(error);
-      else
-        await interaction.reply("Server catch unknown error, please try late.");
-    }
-  } else if (interaction.commandName === "setram") {
-    try {
-      let status = discord.getStatus();
-      if (status === 0) {
-        let ram = interaction.options.getInteger("amount");
-        discord.setRAM(ram);
-        await interaction.reply(`Ram is set to ${ram}`);
-      } else {
-        await interaction.reply("Cannot set ram when server is active");
-      }
-    } catch (error) {
-      if (typeof error === "object") await interaction.reply(error.message);
-      else if (typeof error === "string") await interaction.reply(error);
-      else
-        await interaction.reply("Server catch unknown error, please try late.");
+  const command = interaction.client.commands.get(interaction.commandName);
+
+  if (!command) {
+    console.error(`No command matching ${interaction.commandName} was found.`);
+    return;
+  }
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({
+        content: "There was an error while executing this command!",
+        ephemeral: true,
+      });
+    } else {
+      await interaction.reply({
+        content: "There was an error while executing this command!",
+        ephemeral: true,
+      });
     }
   }
 });
 
-client.login(process.env.DISCORD_TOKEN);
+client.login(proccess.env.DISCORD_TOKEN);
