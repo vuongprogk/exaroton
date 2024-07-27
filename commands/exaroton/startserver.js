@@ -10,7 +10,12 @@ export async function execute(interaction) {
     const server = new Exaroton()
     let status = await server.getStatus();
     if (status === 0) {
-      await start(interaction);
+      try {
+        await server.startServer();
+        await interaction.reply("Server is starting");
+      } catch (error) {
+        throw error;
+      }
     } else if (status === 1)
       await interaction.reply(`Server has already run at ${await server.getAddress()}`);
     else await interaction.reply("Server in proccess, please wait.");
