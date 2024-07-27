@@ -5,7 +5,8 @@ export async function start(interaction) {
   try {
     const server = new Exaroton()
     await server.startServer();
-    await interaction.reply(`Server is starting at ${await server.getAddress()}`);
+    let address = await server.getAddress()
+    await interaction.reply(`Server is starting at ${address}`);
   } catch (error) {
     throw error;
   }
