@@ -1,6 +1,5 @@
 import { SlashCommandBuilder } from "discord.js";
 import { Exaroton } from "./exaroton-api/utils.js";
-import { stop } from "./exaroton-api/custom-cmd.js";
 
 export const data = new SlashCommandBuilder()
   .setName("stopserver")
