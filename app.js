@@ -2,11 +2,25 @@ import "dotenv/config";
 import { readdirSync } from "node:fs";
 import { join, dirname, relative } from "node:path";
 import { fileURLToPath } from "url"
-import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import { Client, Collection, Events, GatewayIntentBits, Guild, IntentsBitField } from "discord.js";
 import proccess from "node:process";
 
+const intentsList = new IntentsBitField();
+intentsList.add(
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+)
+
+const client = new Client({
+  intents: [
+    IntentsBitField.Flags.Guilds,
+    IntentsBitField.Flags.GuildMembers,
+    IntentsBitField.Flags.GuildMessages,
+    IntentsBitField.Flags.MessageContent,
+    IntentsBitField.Flags.GuildMessageReactions,
+    IntentsBitField.Flags.DirectMessageReactions
+  ],
+  partials: ["MESSAGE", "CHANNEL", "REACTION"]
+});
 client.commands = new Collection();
 
 // TODO: get path
